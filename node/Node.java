@@ -78,6 +78,10 @@ public class Node<T extends Comparable<T>> {
 		return value;
 	}
 	
+	public Color getColor() {
+		return color;
+	}
+	
 	public Node<T> getGrandParent(){
 		return this.getParent().getParent();
 	}

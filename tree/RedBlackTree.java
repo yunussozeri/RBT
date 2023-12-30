@@ -1,6 +1,7 @@
 package tree;
 
 import node.Node;
+import utilityStuff.OptimizationBlocker;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -436,15 +437,16 @@ public class RedBlackTree<T extends Comparable<T>> {
 			sb.append("\n");
 			sb.append(padding);
 			sb.append(pointer);
-			sb.append(node.getValue());
-			if(node.isBlack()) {
-				sb.append("B");
+			if (node == Node.NIL) {
+				sb.append(" V : NIL");
+				sb.append(" C : " + node.getColor());
 			} else {
-				sb.append("R");
+				sb.append(" V : " + node.getValue());
+				sb.append(" C : " + node.getColor());
 			}
-
 			StringBuilder paddingBuilder = new StringBuilder(padding);
 			if (hasRightSibling) {
+				paddingBuilder.append("│  ");
 				paddingBuilder.append("│  ");
 			} else {
 				paddingBuilder.append("   ");
@@ -458,20 +460,21 @@ public class RedBlackTree<T extends Comparable<T>> {
 			traverseNodes(sb, paddingForBoth, pointerRight, node.getRightChild(), false);
 		}
 	}
-	public char[] traversePreOrder(Node<T> root) {
+	public char[] traversePreOrder(Node<T>  node) {
 
-		if (root == null) {
+		if (node == null) {
 			return "".toCharArray();
 		}
 
 		StringBuilder sb = new StringBuilder();
-		sb.append(root.getValue());
+		sb.append(" V : " + node.getValue());
+		sb.append(" C : " + node.getColor());
 
 		String pointerRight = "└──";
-		String pointerLeft = (root.getRightChild() != null) ? "├──" : "└──";
+		String pointerLeft = (node.getRightChild() != null) ? "├──--" : "└──--";
 
-		traverseNodes(sb, "", pointerLeft, root.getLeftChild(), root.getRightChild() != null);
-		traverseNodes(sb, "", pointerRight, root.getRightChild(), false);
+		traverseNodes(sb, "", pointerLeft, node.getLeftChild(), node.getRightChild() != null);
+		traverseNodes(sb, "", pointerRight, node.getRightChild(), false);
 
 		return sb.toString().toCharArray();
 	}
@@ -501,28 +504,37 @@ public class RedBlackTree<T extends Comparable<T>> {
 		RedBlackTree<Integer> a = new RedBlackTree<>();
 
 		List<int[]> list =  new LinkedList<>();
-		for(int i = 0; i < 64; i++) {
-			System.out.println("-------------");
-			System.out.println("Size : " + a.getSize());
-			System.out.println("Inserting : " + i);
-			int vals[] = new int[2];
-			a.insert(i);
-			vals[0] = i;
-			vals[1] = a.getBH(i);
-			list.add(vals);
-			System.out.println("Size : " + a.getSize());
-			System.out.println("-------------");
+		OptimizationBlocker ob = new OptimizationBlocker();
+		long start = System.nanoTime();
+		int limit  = 50_000_000;
+		for(int i = 0; i < limit ;i++) {
+			//System.out.println("-------------");
+			//System.out.println("Size : " + a.getSize());
+			int j = (int) (Math.random()*i * 100);
+			//System.out.println("Inserting : " + j);
+			//int vals[] = new int[2];
+			a.insert(j);
+			ob.bo(j);
+			//vals[0] = j;
+			//vals[1] = a.getBH(j);
+			//list.add(j);
+			//System.out.println("Size : " + a.getSize());
+			//System.out.println("-------------");
 		}
+		long end = System.nanoTime();
+		long res = (end - start);
+		
 
-		list.forEach(h -> System.out.printf("BH of val %d is %d\n",h[0],h[1]));
+		//list.forEach(h -> System.out.printf("BH of val %d is %d\n",h[0],h[1]));
 		System.out.println( "Size: " + a.getSize());
+		System.out.println( "Result : " + res + "ns -> " + res/1_000_000 + " ms -> " + (float)res/1_000_000_000 + " s" );
 		System.out.println( "##############################");
-
+/*
 		try {
-			a.print(new FileWriter("agacim.txt"));
+			a.print(new FileWriter("agacimke.txt"));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
 	}
 }
