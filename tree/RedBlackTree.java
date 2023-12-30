@@ -1,6 +1,18 @@
 package tree;
 
 import node.Node;
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
 import node.Color;
 
 /**
@@ -59,10 +71,10 @@ public class RedBlackTree<T extends Comparable<T>> {
 	 * Insertion Method for inserting a new node the red black tree. if the tree is
 	 * empty, then the new node becomes the root. Colors are fixed after each
 	 * insertion. As a strategy, all new insertions are initially red.
-	 * 
+	 * This implementation is iterative
 	 * @param value
 	 */
-	public void insert(final T value) {
+	public void insertIterative(final T value) {
 		// create an empty node with red color
 		Node<T> insertion = new Node<>(value, Color.RED);
 
@@ -79,8 +91,8 @@ public class RedBlackTree<T extends Comparable<T>> {
 		Node<T> recent = root;
 		Node<T> storage = SENTINEL;
 
-
-		// iterate until the recent node is not NIL go left, if the recent nodes value is
+		// iterate until the recent node is not NIL go left, if the recent nodes value
+		// is
 		// larger than the insertion value else go right
 		while (recent != Node.NIL) {
 
@@ -110,11 +122,13 @@ public class RedBlackTree<T extends Comparable<T>> {
 			storage.setRightChild(insertion);
 		}
 		// fix colors
-		fixColorsAfterInsertion(insertion);
+		fixColorsAfterInsertionRecursive(insertion);
 	}
+
 
 	/**
 	 * This method is called after each insertion to correct the colors of nodes.
+	 * 
 	 * @param node
 	 */
 	private void fixColorsAfterInsertion(Node<T> node) {
@@ -126,46 +140,122 @@ public class RedBlackTree<T extends Comparable<T>> {
 			boolean parentIsLeftChild = isLeftChild(node.getParent());
 			if (parentIsLeftChild) {
 				node = fixLeft(node, grandparent); // update node
-			} else {  
-				node = fixRight(node, grandparent);  // update node
-			}  
-		}  
-		// set the root black to preserve property  
-		root.setBlack();  
+			} else {
+				node = fixRight(node, grandparent); // update node
+			}
+		}
+		// set the root black to preserve property
+		root.setBlack();
 	}
 
+	/**
+	 * Insertion Method for inserting a new node the red black tree. if the tree is
+	 * empty, then the new node becomes the root. Colors are fixed after each
+	 * insertion. As a strategy, all new insertions are initially red.
+	 * This is a recursive implementation.
+	 * @param value is the value that is added to the tree
+	 */
+	public void insert(final T value) {
+		// create an empty node with red color
+		Node<T> insertion = new Node<>(value, Color.RED);
+
+		// if the tree is empty, make the new node the root and assign the sentinel as parent
+		// fix the colors afterwards.
+		if (isEmpty()) {
+			root = insertion;
+			root.setParent(SENTINEL);
+			fixColorsAfterInsertion(insertion);
+		} else {
+			recursiveInsert(root, insertion);
+		}
+	}
+
+	private void recursiveInsert(Node<T> current, Node<T> insertion) {
+		// compare current value and the insertion value
+		T currentValue = current.getValue();
+		boolean currentIsLarger = currentValue.compareTo(insertion.getValue()) > 0;
+
+		// go left if the current is larger, go right if the current is smaller
+		if (currentIsLarger) {
+			if (current.getLeftChild() == Node.NIL) {
+				// found the correct position, insert the node and fix colors
+				insertion.setParent(current);
+				current.setLeftChild(insertion);
+				fixColorsAfterInsertion(insertion);
+			} else {
+				// continue recursion on the left subtree
+				recursiveInsert(current.getLeftChild(), insertion);
+			}
+		} else {
+			if (current.getRightChild() == Node.NIL) {
+				// found the correct position, insert the node and fix colors
+				insertion.setParent(current);
+				current.setRightChild(insertion);
+				fixColorsAfterInsertion(insertion);
+			} else {
+				// continue recursion on the right subtree
+				recursiveInsert(current.getRightChild(), insertion);
+			}
+		}
+	}
 
 	/**
-	 * Fixes right half of the tree
-	 * METHOD HANDLES ONLY RIGHT-RIGHT INSERTION CASE.
+	 * This method is called after each insertion to correct the colors of nodes.
 	 * 
-	 * @param node is the current position
+	 * @param node
+	 */
+	private void fixColorsAfterInsertionRecursive(Node<T> node) {
+
+		if (node == root ) {
+			node.setBlack();
+			return;
+		}
+
+		if(node.getParent().isBlack()) {
+			return;
+		}
+
+		Node<T> grandparent = node.getGrandParent();
+		boolean parentIsLeftChild = isLeftChild(node.getParent());
+		if (parentIsLeftChild) {
+			node = fixLeft(node, grandparent);
+		} else {
+			node = fixRight(node, grandparent);
+		}
+		fixColorsAfterInsertion(node);
+	}
+
+	/**
+	 * Fixes right half of the tree METHOD HANDLES ONLY RIGHT-RIGHT INSERTION CASE.
+	 * 
+	 * @param node        is the current position
 	 * @param grandparent is the predecessor of predecessor
-	 * @return the grandparent, if the uncle is red and not NIL, otherwise return the parent
+	 * @return the grandparent, if the uncle is red and not NIL, otherwise return
+	 *         the parent
 	 */
 	private Node<T> fixRight(Node<T> node, Node<T> grandparent) {
 		Node<T> uncle = grandparent.getLeftChild(); // the parent was the right child, so uncle must be left
-		if (uncle != Node.NIL && uncle.isRed()) {  // if uncle is red and not NIL
+		if (uncle != Node.NIL && uncle.isRed()) { // if uncle is red and not NIL
 			// set parent and uncle black, and grandparent red
 			// set node as grandparent for next iteration
 			node.getParent().setBlack();
-			uncle.setBlack();  
-			grandparent.setRed();  
-			node = grandparent;  
-		} else {  // if uncle is not red or NIL
-			if (isLeftChild(node)) {  // if current node is left child
+			uncle.setBlack();
+			grandparent.setRed();
+			node = grandparent;
+		} else { // if uncle is not red or NIL
+			if (isLeftChild(node)) { // if current node is left child
 				// set the parent as the node, and right rotation around the node.
-				node = node.getParent();  
-				rightRotationAround(node);  
-			}  
-			// set the nodes parent black and grandfather red, left rotation around grandparent
-			node.getParent().setBlack();  
-			grandparent.setRed();  
-			leftRotationAround(grandparent);  
-		}  
-		return node;  // return the node for the iteration
-	}  
-
+				node = node.getParent();
+				rightRotationAround(node);
+			}
+			// set the nodes parent black and grandfather red, left rotation around
+			// grandparent
+			node.getParent().setBlack();
+			grandparent.setRed();
+			leftRotationAround(grandparent);
+		}
+		return node; // return the node for the iteration
+	}
 
 	private Node<T> fixLeft(Node<T> node, Node<T> grandparent) {
 		Node<T> uncle = grandparent.getRightChild();
@@ -184,7 +274,7 @@ public class RedBlackTree<T extends Comparable<T>> {
 			grandparent.setRed();
 			rightRotationAround(grandparent);
 		}
-		return node;  
+		return node;
 	}
 
 	private boolean isRightChild(Node<T> node) {
@@ -195,7 +285,7 @@ public class RedBlackTree<T extends Comparable<T>> {
 		return node == node.getParent().getLeftChild();
 	}
 
-	//-- 
+	// --
 	private void leftRotationAround(Node<T> node) {
 		Node<T> y = node.getRightChild();
 		node.setRightChild(y.getLeftChild());
@@ -261,12 +351,69 @@ public class RedBlackTree<T extends Comparable<T>> {
 		}
 	}
 
+	/**
+	 * Clears the Tree 
+	 */
 	public void clear() {
 		root = null;
 	}
 
+	/**
+	 * @return true if the Tree is empty
+	 */
 	public boolean isEmpty() {
 		return root == null;
+	}
+
+	public Node<T> findNode(T value){
+		return findRecursive(root, value);
+	}
+
+	private Node<T> findRecursive(Node<T> current, T searchedValue) {
+		int result = current.getValue().compareTo(searchedValue);
+		if(result == 1) {
+			return findRecursive(current.getLeftChild(), searchedValue);
+		} else if(result == 1) {
+			return findRecursive(current.getRightChild(), searchedValue);
+		} else {
+			return current;
+		}
+	}
+	/**
+	 * Returns the black height of a given node.
+	 * 
+	 * @param node
+	 * @return
+	 */
+	public int getBlackHeightOf(Node<T> node) {
+		if(node == Node.NIL) {
+			return 0;
+		}
+		int rightHeight = getBlackHeightOf(node.getRightChild());
+		int leftHeight = getBlackHeightOf(node.getLeftChild());
+
+		return (node.isBlack() ? 1 : 0 ) + Math.max(rightHeight, leftHeight);
+	}
+
+	public int getBH(T val) {
+		Node<T> node = findNode(val);
+
+		return getBlackHeightOf(node);
+	}
+
+	public int getSize() {
+		return sizeStep(root);
+	}
+
+	private int sizeStep(Node<T> node) {
+		if(node == Node.NIL || node == null) {
+			return 0;
+		}
+
+		int rightSize = sizeStep(node.getRightChild());
+		int leftSize = sizeStep(node.getLeftChild());
+
+		return rightSize + leftSize + 1;  
 	}
 
 	/**
@@ -282,12 +429,100 @@ public class RedBlackTree<T extends Comparable<T>> {
 		return root;
 	}
 
+
+	public void traverseNodes(StringBuilder sb, String padding, String pointer, Node<T> node, 
+			boolean hasRightSibling) {
+		if (node != null) {
+			sb.append("\n");
+			sb.append(padding);
+			sb.append(pointer);
+			sb.append(node.getValue());
+			if(node.isBlack()) {
+				sb.append("B");
+			} else {
+				sb.append("R");
+			}
+
+			StringBuilder paddingBuilder = new StringBuilder(padding);
+			if (hasRightSibling) {
+				paddingBuilder.append("│  ");
+			} else {
+				paddingBuilder.append("   ");
+			}
+
+			String paddingForBoth = paddingBuilder.toString();
+			String pointerRight = "└──";
+			String pointerLeft = (node.getRightChild() != null) ? "├──" : "└──";
+
+			traverseNodes(sb, paddingForBoth, pointerLeft, node.getLeftChild(), node.getRightChild() != null);
+			traverseNodes(sb, paddingForBoth, pointerRight, node.getRightChild(), false);
+		}
+	}
+	public char[] traversePreOrder(Node<T> root) {
+
+		if (root == null) {
+			return "".toCharArray();
+		}
+
+		StringBuilder sb = new StringBuilder();
+		sb.append(root.getValue());
+
+		String pointerRight = "└──";
+		String pointerLeft = (root.getRightChild() != null) ? "├──" : "└──";
+
+		traverseNodes(sb, "", pointerLeft, root.getLeftChild(), root.getRightChild() != null);
+		traverseNodes(sb, "", pointerRight, root.getRightChild(), false);
+
+		return sb.toString().toCharArray();
+	}
+
+	public void print(OutputStreamWriter outputStreamWriter) {
+		char[] chars = traversePreOrder(root);
+		for(char c: chars) {
+			try {
+				//outputStreamWriter.append(c);
+				outputStreamWriter.write(c);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		try {
+			outputStreamWriter.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+
 	public static void main(String[] args) {
 
 		RedBlackTree<Integer> a = new RedBlackTree<>();
 
-		a.insert(3);
+		List<int[]> list =  new LinkedList<>();
+		for(int i = 0; i < 64; i++) {
+			System.out.println("-------------");
+			System.out.println("Size : " + a.getSize());
+			System.out.println("Inserting : " + i);
+			int vals[] = new int[2];
+			a.insert(i);
+			vals[0] = i;
+			vals[1] = a.getBH(i);
+			list.add(vals);
+			System.out.println("Size : " + a.getSize());
+			System.out.println("-------------");
+		}
 
-		a.insert(5);
+		list.forEach(h -> System.out.printf("BH of val %d is %d\n",h[0],h[1]));
+		System.out.println( "Size: " + a.getSize());
+		System.out.println( "##############################");
+
+		try {
+			a.print(new FileWriter("agacim.txt"));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

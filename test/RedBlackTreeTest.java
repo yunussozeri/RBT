@@ -31,6 +31,25 @@ class RedBlackTreeTest {
 	        tree.insert(12);
 	        assertTrue(tree.contains(12));
 	}
+	
+	@Test
+	void testInsertRec() {
+		 RedBlackTree<Integer> tree = new RedBlackTree<>();
+	        assertTrue(tree.isEmpty());
+
+	        tree.insert(10);
+	        assertFalse(tree.isEmpty());
+	        assertTrue(tree.contains(10));
+
+	        tree.insert(5);
+	        assertTrue(tree.contains(5));
+
+	        tree.insert(15);
+	        assertTrue(tree.contains(15));
+
+	        tree.insert(12);
+	        assertTrue(tree.contains(12));
+	}
 
 	@Test
 	void testContains() {
@@ -40,8 +59,6 @@ class RedBlackTreeTest {
         tree.insert(10);
         assertFalse(tree.isEmpty());
         assertTrue(tree.contains(10));
-
-		
 	}
 
 	@Test
@@ -103,6 +120,4 @@ class RedBlackTreeTest {
         assertTrue(tree.getRoot().getRightChild().isBlack());
         assertTrue(tree.getRoot().getRightChild().getLeftChild().isRed());
     }
-
-
 }
